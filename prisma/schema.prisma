@@ -1,0 +1,439 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+//provider = "sqlite"
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  userId            Int
+  type              String
+  provider          String
+  providerAccountId String?
+  access_token      String?
+
+  user User @relation(fields: [userId], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@id([userId, provider])
+}
+
+model User {
+  id Int @id @default(autoincrement())
+
+  name String?
+
+  accounts Account[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model QuestionCatalog {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  questions MultipleChoiceQuestion[]
+
+  helfiUsage   Bewerbstation[] @relation(name: "HelfiFragenkatalog")
+  jugend1Usage Bewerbstation[] @relation(name: "Jugend1Fragenkatalog")
+  jugend2Usage Bewerbstation[] @relation(name: "Jugend2Fragenkatalog")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model MultipleChoiceQuestion {
+  id   Int    @id @default(autoincrement())
+  text String
+
+  answers MultipleChoiceQuestionAnswer[]
+
+  questionCatalog   QuestionCatalog? @relation(fields: [questionCatalogId], references: [id], onDelete: Cascade)
+  questionCatalogId Int?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model MultipleChoiceQuestionAnswer {
+  id            Int     @id @default(autoincrement())
+  text          String
+  correctAnswer Boolean @default(false)
+
+  question   MultipleChoiceQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId Int
+
+  TheorieAntworten TheorieAntworten[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Praxisstation {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  szenarioBeschreibung String
+
+  masterfrage PraxisstationMasterfrage?
+
+  bewerter BewerbstationBewerter[]
+
+  helfiUsage   Bewerbstation[] @relation(name: "HelfiPraxisstation")
+  jugend1Usage Bewerbstation[] @relation(name: "Jugend1Praxisstation")
+  jugend2Usage Bewerbstation[] @relation(name: "Jugend2Praxisstation")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model PraxisstationMasterfrage {
+  praxisstation   Praxisstation @relation(fields: [praxisstationId], references: [id], onDelete: Cascade)
+  praxisstationId Int           @id
+
+  frage String
+
+  antwort1 String // Korrekte Antwort
+  antwort2 String
+  antwort3 String
+
+  punkte Int
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Bewerbstation {
+  id Int @id @default(autoincrement())
+
+  type String // THEORY, PRACTICAL
+
+  name     String
+  location String
+
+  //szenarioBeschreibung String?
+
+  //masterfrage       String?
+  //masterfrageA1     String?
+  //masterfrageA2     String?
+  //masterfrageA3     String?
+  //masterfragePunkte Int?
+
+  //bewerter BewerbstationBewerter[]
+
+  helfiFragenkatalog   QuestionCatalog? @relation(fields: [helfiFragenkatalogId], references: [id], name: "HelfiFragenkatalog", onDelete: Restrict)
+  helfiFragenkatalogId Int?
+
+  jugend1Fragenkatalog   QuestionCatalog? @relation(fields: [jugend1FragenkatalogId], references: [id], name: "Jugend1Fragenkatalog", onDelete: Restrict)
+  jugend1FragenkatalogId Int?
+
+  jugend2Fragenkatalog   QuestionCatalog? @relation(fields: [jugend2FragenkatalogId], references: [id], name: "Jugend2Fragenkatalog", onDelete: Restrict)
+  jugend2FragenkatalogId Int?
+
+  helfiPraxisstation   Praxisstation? @relation(fields: [helfiPraxisstationId], references: [id], name: "HelfiPraxisstation", onDelete: Restrict)
+  helfiPraxisstationId Int?
+
+  jugend1Praxisstation   Praxisstation? @relation(fields: [jugend1PraxisstationId], references: [id], name: "Jugend1Praxisstation", onDelete: Restrict)
+  jugend1PraxisstationId Int?
+
+  jugend2Praxisstation   Praxisstation? @relation(fields: [jugend2PraxisstationId], references: [id], name: "Jugend2Praxisstation", onDelete: Restrict)
+  jugend2PraxisstationId Int?
+
+  sozialstation   Sozialstation? @relation(fields: [sozialstationId], references: [id])
+  sozialstationId Int?
+
+  zivilcourageStation   ZivilcurageStation? @relation(fields: [zivilcouragestationId], references: [id])
+  zivilcouragestationId Int?
+
+  praxisBewertung       PraxisBewertung[]
+  theorieBewertung      TheorieBewertung[]
+  sozialBewertung       SozialBewertung[]
+  zivilcourageBewertung ZivilcourageBewertung[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model BewerbstationBewerter {
+  id Int @id @default(autoincrement())
+
+  hauptbewerter Boolean @default(false)
+
+  praxisstation   Praxisstation @relation(fields: [praxisstationId], references: [id], onDelete: Cascade)
+  praxisstationId Int
+
+  //helfiRelevant Boolean @default(true)
+
+  additionalNote String?
+
+  bewertungskriterien Bewertungskriterium[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Bewertungskriterium {
+  id Int @id @default(autoincrement())
+
+  text   String
+  punkte Int
+
+  bewerter   BewerbstationBewerter @relation(fields: [bewerterId], references: [id], onDelete: Cascade)
+  bewerterId Int
+
+  BewertungskriteriumBewertung BewertungskriteriumBewertung[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Bewerbsteam {
+  id Int @id @default(autoincrement())
+
+  name         String
+  jugendgruppe String?
+
+  altersklasse String
+
+  teilnehmer Bewerbsteilnehmer[]
+
+  praxisBewertung       PraxisBewertung[]
+  theorieBewertung      TheorieBewertung[]
+  sozialBewertung       SozialBewertung[]
+  zivilcourageBewertung ZivilcourageBewertung[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Bewerbsteilnehmer {
+  pernr Int @id
+
+  bewerbsteam   Bewerbsteam @relation(fields: [bewerbsteamId], references: [id], onDelete: Restrict)
+  bewerbsteamId Int
+
+  theorieBewertung TheorieBewertung[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model Whitelist {
+  pernr Int @id
+
+  name    String  @default("Bewerter")
+  tag     String  @default("BEW")
+  vorname String?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model PraxisBewertung {
+  id Int @id @default(autoincrement())
+
+  gruppeId  Int
+  gruppe    Bewerbsteam   @relation(fields: [gruppeId], references: [id], onDelete: Restrict)
+  stationId Int
+  station   Bewerbstation @relation(fields: [stationId], references: [id], onDelete: Restrict)
+
+  masterfrage String?
+
+  bewertungen BewertungskriteriumBewertung[]
+
+  einspruch Boolean @default(false)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([gruppeId, stationId])
+}
+
+model BewertungskriteriumBewertung {
+  kriteriumId Int
+  kriterium   Bewertungskriterium @relation(fields: [kriteriumId], references: [id], onDelete: Restrict)
+
+  bewertungId Int
+  bewertung   PraxisBewertung @relation(fields: [bewertungId], references: [id], onDelete: Cascade)
+
+  // Unschön, aber Quickfix
+  startnummer Int?
+
+  rating String
+
+  @@id([kriteriumId, bewertungId])
+}
+
+model TheorieBewertung {
+  id Int @id @default(autoincrement())
+
+  gruppeId  Int
+  gruppe    Bewerbsteam   @relation(fields: [gruppeId], references: [id], onDelete: Restrict)
+  stationId Int
+  station   Bewerbstation @relation(fields: [stationId], references: [id], onDelete: Restrict)
+
+  teilnehmerId Int?
+  teilnehmer   Bewerbsteilnehmer? @relation(fields: [teilnehmerId], references: [pernr], onDelete: Restrict)
+
+  antworten TheorieAntworten[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([gruppeId, stationId, teilnehmerId])
+}
+
+model TheorieAntworten {
+  bewertungId Int
+  bewertung   TheorieBewertung @relation(fields: [bewertungId], references: [id], onDelete: Cascade)
+
+  antwortId Int
+  antwort   MultipleChoiceQuestionAnswer @relation(fields: [antwortId], references: [id], onDelete: Restrict)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@id([bewertungId, antwortId])
+}
+
+model SozialBewertung {
+  id Int @id @default(autoincrement())
+
+  gruppeId  Int
+  gruppe    Bewerbsteam   @relation(fields: [gruppeId], references: [id], onDelete: Restrict)
+  stationId Int
+  station   Bewerbstation @relation(fields: [stationId], references: [id], onDelete: Restrict)
+
+  helfiRunde   SozialstationHelfiRunde? @relation(fields: [helfiRundeId], references: [id], onDelete: Restrict)
+  helfiRundeId Int?
+
+  jugendBegriff   SozialstationJugendBegriff? @relation(fields: [jugendBegriffId], references: [id], onDelete: Restrict)
+  jugendBegriffId Int?
+
+  erkannt          Boolean
+  grundsatzErkannt Boolean?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([gruppeId, stationId, helfiRundeId, jugendBegriffId])
+}
+
+// Grundsätze und Leitbild
+model Sozialstation {
+  id Int @id @default(autoincrement())
+
+  helfiRunden    SozialstationHelfiRunde[]
+  jugendBegriffe SozialstationJugendBegriff[]
+
+  Bewerbstation Bewerbstation[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// Parcours fahren
+model SozialstationHelfiRunde {
+  id                  Int           @id @default(autoincrement())
+  bild                String
+  type                String //GRUNDSATZ,LEITBILD,NICHTS
+  punkteProTeilnehmer Int
+  sozialstation       Sozialstation @relation(fields: [sozialstationId], references: [id])
+  sozialstationId     Int
+
+  bewertungen SozialBewertung[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// TABU
+model SozialstationJugendBegriff {
+  id              Int           @id @default(autoincrement())
+  begriff         String
+  grundsatz       Boolean       @default(false)
+  punkteErraten   Int
+  punkteGrundsatz Int?
+  sozialstation   Sozialstation @relation(fields: [sozialstationId], references: [id])
+  sozialstationId Int
+
+  bewertungen SozialBewertung[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+model ZivilcourageBewertung {
+  id Int @id @default(autoincrement())
+
+  gruppeId  Int
+  gruppe    Bewerbsteam   @relation(fields: [gruppeId], references: [id], onDelete: Restrict)
+  stationId Int
+  station   Bewerbstation @relation(fields: [stationId], references: [id], onDelete: Restrict)
+
+  helfiAussage   ZivilcurageHelfiAussage? @relation(fields: [helfiAussageId], references: [id], onDelete: Restrict)
+  helfiAussageId Int?
+
+  jugendBegriff   ZivilcurageJugendBegriff? @relation(fields: [jugendBegriffId], references: [id], onDelete: Restrict)
+  jugendBegriffId Int?
+
+  anzahlRichtigStehend Int?
+  erkannt              Boolean?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([gruppeId, stationId, helfiAussageId, jugendBegriffId])
+}
+
+// Zililcourage
+model ZivilcurageStation {
+  id             Int                        @id @default(autoincrement())
+  helfiAussagen  ZivilcurageHelfiAussage[]
+  jugendBegriffe ZivilcurageJugendBegriff[]
+  created_at     DateTime                   @default(now())
+  updated_at     DateTime                   @updatedAt
+  Bewerbstation  Bewerbstation[]
+}
+
+// 1, 2 oder 3
+model ZivilcurageHelfiAussage {
+  id                   Int                @id @default(autoincrement())
+  aussage              String
+  antwort1             String? // richtig
+  antwort2             String?
+  antwort3             String?
+  punkteProTeilnehmer  Int
+  zivilcurageStation   ZivilcurageStation @relation(fields: [zivilcurageStationId], references: [id])
+  zivilcurageStationId Int
+
+  bewertungen ZivilcourageBewertung[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
+
+// Activity
+model ZivilcurageJugendBegriff {
+  id                   Int                @id @default(autoincrement())
+  begriff              String
+  darstellungsart      String // DRAW,PANTOMIME
+  punkte               Int
+  zivilcurageStation   ZivilcurageStation @relation(fields: [zivilcurageStationId], references: [id])
+  zivilcurageStationId Int
+
+  bewertungen ZivilcourageBewertung[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}

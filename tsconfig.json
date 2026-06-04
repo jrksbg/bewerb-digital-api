@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "nodenext",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    //"rewriteRelativeImportExtensions": true,
+    "verbatimModuleSyntax": true,
+    "outDir": "dist"
+  },
+  "include": ["src", "prisma"]
+}
