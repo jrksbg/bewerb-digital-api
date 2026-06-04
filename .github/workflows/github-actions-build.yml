@@ -1,0 +1,39 @@
+name: Build Pipeline
+
+on:
+    push:
+        branches:
+            - develop
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v6
+            
+            - name: Install pnpm
+              uses: pnpm/action-setup@v6
+              with:
+                version: 11
+            
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                node-version: '24'
+                cache: 'pnpm'
+            
+            - name: Install Dependencies securely
+              run: pnpm ci
+            
+            - name: Build Application
+              run: pnpm run build
+            
+            - name: Archive production artifacts
+              uses: actions/upload-artifact@v7
+              with:
+                name: BewerbDigitalAPI
+                path: dist
+                compression-level: 0
+                retention-days: 1
+              
