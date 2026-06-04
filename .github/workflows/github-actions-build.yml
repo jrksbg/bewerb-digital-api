@@ -18,7 +18,7 @@ jobs:
                 version: 11
             
             - name: Setup Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v6
               with:
                 node-version: '24'
                 cache: 'pnpm'
@@ -29,11 +29,19 @@ jobs:
             - name: Build Application
               run: pnpm run build
             
+            - name: Copy prisma seed and migration files to dist folder
+              run: |
+                mkdir -p dist/src/prisma
+                cp -r prisma/migrations dist/src/prisma
+                cp dist/prisma/seed.mjs dist/src/prisma/seed.mjs
+            
             - name: Archive production artifacts
               uses: actions/upload-artifact@v7
               with:
                 name: BewerbDigitalAPI
-                path: dist
+                path: |
+                  dist/prisma
+                  dist/src
                 compression-level: 0
                 retention-days: 1
               
